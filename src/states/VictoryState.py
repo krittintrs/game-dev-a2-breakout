@@ -18,7 +18,8 @@ class VictoryState(BaseState):
         self.health = params['health']
         self.score = params['score']
         self.ball = params['ball']
-
+        self.high_scores = params["high_scores"]
+        self.recover_points = params['recover_points']
 
     def update(self, dt, events):
         self.paddle.update(dt)
@@ -36,6 +37,8 @@ class VictoryState(BaseState):
                         'bricks': LevelMaker.CreateMap(self.level + 1),
                         'health': self.health,
                         'score': self.score,
+                        'high_scores': self.high_scores,
+                        'recover_points':self.recover_points,
                     })
 
 
