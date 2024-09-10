@@ -22,7 +22,7 @@ class VictoryState(BaseState):
         self.recover_points = params['recover_points']
 
     def update(self, dt, events):
-        self.paddle.update(dt)
+        self.paddle.update(dt, self.ball)
 
         # put ball above the paddle
         self.ball.rect.x = self.paddle.rect.x + (self.paddle.width/2) - 12

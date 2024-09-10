@@ -38,7 +38,7 @@ class PlayState(BaseState):
         if self.paused:
             return
 
-        self.paddle.update(dt)
+        self.paddle.update(dt, self.ball)
         self.ball.update(dt)
 
         if self.ball.Collides(self.paddle):

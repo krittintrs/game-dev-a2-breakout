@@ -1,6 +1,7 @@
 import pygame
 from src.constants import *
 from src.Dependency import *
+import random
 
 class Paddle:
     def __init__(self, skin=1):
@@ -18,23 +19,32 @@ class Paddle:
 
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
 
+        self.mode = 'AI' 
+        # self.mode = 'PLAYER'
+
     def SetImage(self, skin):
         self.skin = skin
         self.image = paddle_image_list[self.skin-1]
 
-    def update(self, dt):
-        key = pygame.key.get_pressed()
-        if key[pygame.K_LEFT]:
-            self.dx = -PADDLE_SPEED
-        elif key[pygame.K_RIGHT]:
-            self.dx = PADDLE_SPEED
-        else:
-            self.dx = 0
+    def update(self, dt, ball):
+        
+        if self.mode == 'PLAYER':
+            key = pygame.key.get_pressed()
+            if key[pygame.K_LEFT]:
+                self.dx = -PADDLE_SPEED
+            elif key[pygame.K_RIGHT]:
+                self.dx = PADDLE_SPEED
+            else:
+                self.dx = 0
 
-        if self.dx < 0:
-            self.rect.x = max(0, self.rect.x + self.dx * dt)
-        else:
-            self.rect.x = min(WIDTH - self.width, self.rect.x + self.dx * dt)
+            if self.dx < 0:
+                self.rect.x = max(0, self.rect.x + self.dx * dt)
+            else:
+                self.rect.x = min(WIDTH - self.width, self.rect.x + self.dx * dt)
+        
+        elif self.mode == 'AI':
+            self.rect.x = ball.rect.x - (self.width/2)
+            # self.rect.y = ball.rect.y + 24
 
 
     def render(self, screen):

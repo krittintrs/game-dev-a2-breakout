@@ -27,8 +27,8 @@ class ServeState(BaseState):
     def Exit(self):
         pass
 
-    def update(self,  dt, events):
-        self.paddle.update(dt)
+    def update(self, dt, events):
+        self.paddle.update(dt, self.ball)
         # put the ball above the paddle
         self.ball.rect.x = self.paddle.x + (self.paddle.width/2) - 12
         self.ball.rect.y = self.paddle.y - 24
