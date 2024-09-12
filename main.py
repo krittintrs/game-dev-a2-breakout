@@ -93,6 +93,40 @@ class GameMain:
         else:
             main.screen.blit(self.bg_image, (0, 0))
 
+    def RenderDebugImages(self):
+        images_per_column = 4  # Number of images per column
+        x_offset = 10  # Starting horizontal position
+        y_offset = 10  # Starting vertical position
+        column_width = 200  # Width of each column (adjust as needed)
+        image_spacing = 10  # Space between images
+        text_spacing = 5  # Space between image and text
+        
+        # Loop through images and render them in columns
+        for i, image in enumerate(brick_image_list):
+            # Blit the image
+            self.screen.blit(image, (x_offset, y_offset))
+            
+            # Find the corresponding key for the image
+            for key, value in sprite_collection.items():
+                if value.image == image:
+                    text = gFonts["small"].render(key, True, (255, 255, 255))  # White text
+                    self.screen.blit(text, (x_offset, y_offset + image.get_height() + text_spacing))
+                    break
+            
+            # Update vertical offset for the next image
+            y_offset += image.get_height() + image_spacing + gFonts["small"].get_height() + text_spacing
+            
+            # Move to the next column after `images_per_column` images
+            if (i + 1) % images_per_column == 0:
+                x_offset += column_width
+                y_offset = 10  # Reset y_offset for the new column
+
+            # Adjust the position if you need more space or have different column widths
+            if x_offset + column_width > WIDTH:
+                x_offset = 10
+                y_offset += max(image.get_height() + gFonts["small"].get_height() + text_spacing, 500)  # Adjust as needed
+    
+
     def PlayGame(self):
         self.bg_music.play(-1)
         clock = pygame.time.Clock()
@@ -112,8 +146,12 @@ class GameMain:
 
             #bg render
             self.RenderBackground()
+
+            # Render debug images and names
+            self.RenderDebugImages()
+
             #render
-            g_state_manager.render()
+            # g_state_manager.render()
 
             #screen update
             pygame.display.update()
