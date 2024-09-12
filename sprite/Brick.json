@@ -3,140 +3,140 @@
     "size":[32,16],
     "sprites":[
         {
-            "name":"b_blue_1",
+            "name":"b_blue_0",
             "x":0,
+            "y":0,
+            "scalefactor":3,
+            "colorKey":-1
+        },
+        {
+            "name":"b_blue_1",
+            "x":32,
             "y":0,
             "scalefactor":3,
             "colorKey":-1
         },
         {
             "name":"b_blue_2",
-            "x":32,
+            "x":64,
             "y":0,
             "scalefactor":3,
             "colorKey":-1
         },
         {
             "name":"b_blue_3",
-            "x":64,
+            "x":96,
             "y":0,
             "scalefactor":3,
             "colorKey":-1
         },
         {
-            "name":"b_blue_4",
-            "x":96,
+            "name":"b_green_0",
+            "x":128,
             "y":0,
             "scalefactor":3,
             "colorKey":-1
         },
         {
             "name":"b_green_1",
-            "x":128,
+            "x":160,
             "y":0,
             "scalefactor":3,
             "colorKey":-1
         },
         {
             "name":"b_green_2",
-            "x":160,
-            "y":0,
-            "scalefactor":3,
-            "colorKey":-1
-        },
-        {
-            "name":"b_green_3",
             "x":0,
             "y":16,
             "scalefactor":3,
             "colorKey":-1
         },
         {
-            "name":"b_green_4",
+            "name":"b_green_3",
             "x":32,
+            "y":16,
+            "scalefactor":3,
+            "colorKey":-1
+        },
+        {
+            "name":"b_red_0",
+            "x":64,
             "y":16,
             "scalefactor":3,
             "colorKey":-1
         },
         {
             "name":"b_red_1",
-            "x":64,
+            "x":96,
             "y":16,
             "scalefactor":3,
             "colorKey":-1
         },
         {
             "name":"b_red_2",
-            "x":96,
+            "x":128,
             "y":16,
             "scalefactor":3,
             "colorKey":-1
         },
         {
             "name":"b_red_3",
-            "x":128,
-            "y":16,
-            "scalefactor":3,
-            "colorKey":-1
-        },
-        {
-            "name":"b_red_4",
             "x":160,
             "y":16,
             "scalefactor":3,
             "colorKey":-1
         },
         {
-            "name":"b_purple_1",
+            "name":"b_purple_0",
             "x":0,
             "y":32,
             "scalefactor":3,
             "colorKey":-1
         },
         {
-            "name":"b_purple_2",
+            "name":"b_purple_1",
             "x":32,
             "y":32,
             "scalefactor":3,
             "colorKey":-1
         },
         {
-            "name":"b_purple_3",
+            "name":"b_purple_2",
             "x":64,
             "y":32,
             "scalefactor":3,
             "colorKey":-1
         },
         {
-            "name":"b_purple_4",
+            "name":"b_purple_3",
             "x":96,
             "y":32,
             "scalefactor":3,
             "colorKey":-1
         },
         {
-            "name":"b_orange_1",
+            "name":"b_orange_0",
             "x":128,
             "y":32,
             "scalefactor":3,
             "colorKey":-1
         },
         {
-            "name":"b_orange_2",
+            "name":"b_orange_1",
             "x":160,
             "y":32,
             "scalefactor":3,
             "colorKey":-1
         },
         {
-            "name":"b_orange_3",
+            "name":"b_orange_2",
             "x":0,
             "y":48,
             "scalefactor":3,
             "colorKey":-1
         },
         {
-            "name":"b_orange_4",
+            "name":"b_orange_3",
             "x":32,
             "y":48,
             "scalefactor":3,

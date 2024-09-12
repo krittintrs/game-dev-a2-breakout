@@ -3,26 +3,26 @@ from src.constants import *
 from src.Dependency import *
 
 brick_image_name_list = [
+    "b_blue_0",
     "b_blue_1",
     "b_blue_2",
     "b_blue_3",
-    "b_blue_4",
+    "b_green_0",
     "b_green_1",
     "b_green_2",
     "b_green_3",
-    "b_green_4",
+    "b_red_0",
     "b_red_1",
     "b_red_2",
     "b_red_3",
-    "b_red_4",
+    "b_purple_0",
     "b_purple_1",
     "b_purple_2",
     "b_purple_3",
-    "b_purple_4",
+    "b_orange_0",
     "b_orange_1",
     "b_orange_2",
     "b_orange_3",
-    "b_orange_4",
     "b_gray",
 ]
 
