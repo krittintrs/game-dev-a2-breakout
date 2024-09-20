@@ -1,19 +1,34 @@
 import random, pygame, math
 from src.Brick import Brick
 from src.constants import *
+from enum import Enum, auto
 
-#patterns
-NONE = 1
-SINGLE_PYRAMID = 2
-MULTI_PYRAMID = 3
+STAGE1 = 1
+STAGE1_MIN_ROW = 1
+STAGE1_MAX_ROW = 3
+STAGE1_MIN_COL = 5
+STAGE1_MAX_COL = 9
 
-SOLID = 1            # all colors the same in this row
-alt = 2        # alternative colors
-SKIP = 3             # skip every other brick
-NONE = 4             # no block this row
+STAGE2 = 7
+STAGE2_MIN_ROW = 3
+STAGE2_MAX_ROW = 5
+STAGE2_MIN_COL = 7
+STAGE2_MAX_COL = 11
 
-# MAX_COL = 13
-# MAX_TIER = 3
+STAGE3 = 16
+STAGE3_MIN_ROW = 4
+STAGE3_MAX_ROW = 7
+STAGE3_MIN_COL = 9
+STAGE3_MAX_COL = 13
+
+MAX_BRICK_STRENGTH = 19
+
+class Pattern(Enum):
+    DEFAULT = auto()
+    ALT = auto()
+    SKIP = auto()
+    PYRAMID = auto()
+    MULTIPLE = auto()
 
 class LevelMaker:
     def __init__(self):
@@ -28,22 +43,6 @@ class LevelMaker:
         tier = strength // 5
         color = (strength % 5)
         return tier, color
-
-    @classmethod
-    def get_increment(cls, level, initial_probs=(0.7, 0.3), increment=0.05, max_prob=0.9):
-        # Unpack initial probabilities
-        prob_0, prob_1 = initial_probs
-        
-        if level > 8:
-            level -= 8
-        # Increase the probability of getting 1 with the level, but cap it at max_prob
-        prob_1 = min(prob_1 + increment * level, max_prob)
-        prob_0 = 1 - prob_1  # Ensure the total probability sums to 1
-
-        if level == 1: return 0
-        # Generate a random choice based on the updated probabilities
-        choice = random.choices([0, 1], weights=[prob_0, prob_1])[0]
-        return choice
     
     @classmethod
     def generate_flags(cls, num_rows):
@@ -68,39 +67,20 @@ class LevelMaker:
     def levelGenerator(cls, level):
         # Constraints
 
-        STAGE1 = 1
-        STAGE1_MIN_ROW = 1
-        STAGE1_MAX_ROW = 3
-        STAGE1_MIN_COL = 5
-        STAGE1_MAX_COL = 9
-
-        STAGE2 = 7
-        STAGE2_MIN_ROW = 3
-        STAGE2_MAX_ROW = 5
-        STAGE2_MIN_COL = 7
-        STAGE2_MAX_COL = 11
-
-        STAGE3 = 16
-        STAGE3_MIN_ROW = 4
-        STAGE3_MAX_ROW = 7
-        STAGE3_MIN_COL = 9
-        STAGE3_MAX_COL = 13
-
         global prev_rows, prev_cols, prev_brick_strength
         
         if level == STAGE1:
             num_rows = 1
             num_cols = 5
+            
             selected_brick_strength = prev_brick_strength = 0
             selected_tier, selected_color = cls.derive_tier_and_color(selected_brick_strength)
             
             alt_strength, alt_tier, alt_color = selected_brick_strength, selected_tier, selected_color   
-            alt_pattern = False
-            skip_pattern = False
-            pyramid_pattern = False
-            multiple_pattern = False
 
-        elif STAGE1 < level:# < STAGE3:
+            pattern = Pattern.DEFAULT
+
+        elif STAGE1 < level:
             if STAGE1 < level < STAGE2:
                 MIN_ROW = STAGE1_MIN_ROW
                 MAX_ROW = STAGE1_MAX_ROW
@@ -117,134 +97,129 @@ class LevelMaker:
                 MIN_COL = STAGE3_MIN_COL
                 MAX_COL = STAGE3_MAX_COL
 
-            selected_brick_strength = (level-1)//3
+            if level < STAGE3:
+                selected_brick_strength = (level-1)//3
+            else:
+                selected_brick_strength = min((level-1)//2, MAX_BRICK_STRENGTH)
             selected_tier, selected_color = cls.derive_tier_and_color(selected_brick_strength)
+            print(f'SELECTED STR: {selected_brick_strength} (T{selected_tier}-C{selected_color})')
             
             alt_strength, alt_tier, alt_color = selected_brick_strength, selected_tier, selected_color
-            alt_pattern = False
-            skip_pattern = False
-            pyramid_pattern = False
-            multiple_pattern = False
+            
+            pattern = Pattern.DEFAULT
 
             if selected_brick_strength > prev_brick_strength:
-                print('>>> STR UP <<<<')
-                num_rows = min(max(prev_rows + cls.get_increment(level)*-1, MIN_ROW), MAX_ROW)
+                print('??? STR UP ???')
+                num_rows = min(max(prev_rows + random.randint(-1, 0), MIN_ROW), MAX_ROW)
                 
                 if num_rows < prev_rows:
+                    # if row decrease, increase col
                     num_cols = min(prev_cols + 2, MAX_COL) 
                 else: 
-                    num_cols = min(max(prev_cols + cls.get_increment(level)*2, MIN_COL), MAX_COL) 
+                    # if row the same, might increase col
+                    inc_cols = random.choices([0, 2], weights=[0.3, 0.7])[0]
+                    num_cols = min(max(prev_cols + inc_cols, MIN_COL), MAX_COL) 
 
                 if random.choice([True, False]) and num_rows > 1:
-                    multiple_pattern = True
+                    pattern = Pattern.MULTIPLE
                 else:
-                    pyramid_pattern = True
+                    pattern = Pattern.PYRAMID
 
             else:
                 if random.choice([True, False]):
-                    print('>>> SAME STR - ROW UP & SKIP <<<<')
+                    print('??? SAME STR - ROW UP & COL MIGHT DOWN ???')
                     num_rows = min(prev_rows + 1, MAX_ROW)
-                    num_cols = min(max(prev_cols + cls.get_increment(level)*-2, MIN_COL), MAX_COL) 
+
+                    dec_cols = random.choices([0, -2], weights=[0.3, 0.7])[0]
+                    num_cols = min(max(prev_cols + dec_cols, MIN_COL), MAX_COL) 
                     
                     if random.choice([True, False]):
-                        skip_pattern = True
+                        pattern = Pattern.SKIP
                     else:
-                        pyramid_pattern = True
+                        pattern = Pattern.PYRAMID
                 else:
-                    print('>>> SAME STR - COL UP & ALTER <<<<')
+                    print('??? SAME STR - COL UP & SAME ROW ???')
                     num_rows = max(prev_rows, MIN_ROW)
                     num_cols = min(max(prev_cols + 2, MIN_COL), MAX_COL) 
                     
-                    alt_strength = selected_brick_strength + 1
+                    inc_alt = random.choices([1, 2], weights=[0.7, 0.3])[0]
+                    alt_strength = min(selected_brick_strength + inc_alt, MAX_BRICK_STRENGTH)
                     alt_tier, alt_color = cls.derive_tier_and_color(alt_strength)
-                    alt_pattern = True
-
-                    if random.choice([True, False]):
-                        pyramid_pattern = True
+                    pattern = Pattern.ALT
 
         prev_rows = num_rows
         prev_cols = num_cols
         prev_brick_strength = selected_brick_strength
 
-        return num_rows, num_cols, selected_tier, selected_color, alt_pattern, alt_tier, alt_color, skip_pattern, pyramid_pattern, multiple_pattern
+        return num_rows, num_cols, selected_tier, selected_color, alt_tier, alt_color, pattern
     
     @classmethod
     def CreateMap(clf, level):
         bricks = []
         
-        num_rows, num_cols, selected_tier, selected_color, alt_pattern, alt_tier, alt_color, skip_pattern, pyramid_pattern, multiple_pattern = clf.levelGenerator(level)
+        num_rows, num_cols, selected_tier, selected_color, alt_tier, alt_color, pattern = clf.levelGenerator(level)
+
+        global prev_diff
+        if level == 1:
+            prev_diff = 0
 
         if num_rows < 4:
-            y_offset = BRICK_HEIGHT*(4 - num_rows)
+            y_offset = BRICK_HEIGHT * (4-num_rows)
         else:
             y_offset = 0
 
-        if alt_pattern: 
+        if pattern == Pattern.ALT: 
             alt_pattern_list = [1 for _ in range(num_rows)]
             alt_flags = clf.generate_flags(num_rows)
-            print(f'alter_flags: {alt_flags}')
+            if random.choice([True, False]) or num_rows > 3:
+                pattern = Pattern.PYRAMID
         else:
             alt_pattern_list = [0 for _ in range(num_rows)]
             alt_flags = [0 for _ in range(num_rows)]
 
-        if skip_pattern: 
+        if pattern == Pattern.SKIP:
+            # ensure not skip more than 2-3 rows
             skip_pattern_list = [1 for _ in range(num_rows)]
+            skip_count = skip_pattern_list.count(1)
+            while skip_count > 3:
+                skip_indices = [i for i, val in enumerate(skip_pattern_list) if val == 1]
+                index_to_convert = random.choice(skip_indices)
+                skip_pattern_list[index_to_convert] = 0
+                skip_count = skip_pattern_list.count(1)
+            
             if num_rows == 1:
                 skip_flags = [1]
             else:
                 skip_flags = clf.generate_flags(num_rows)
-            
-            skip_count = skip_pattern_list.count(1)
-            while skip_count > 3:
-                skip_indices = [i for i, val in enumerate(skip_pattern_list) if val == 1]
-                
-                index_to_convert = random.choice(skip_indices)
-                skip_pattern_list[index_to_convert] = 0
-                
-                skip_count = skip_pattern_list.count(1)
-
         else: 
             skip_pattern_list = [0 for _ in range(num_rows)]
             skip_flags = [0 for _ in range(num_rows)]
 
-        if pyramid_pattern:
+        if pattern == Pattern.PYRAMID:
             choice = random.randint(1, 4)
             cols_list = []
             if choice == 1:     # single pyramid down
-                print('single reverse pyramid')
-                cols_list = [max(num_cols - i*2, 2-(num_rows%2)) for i in range(num_rows)]
+                cols_list = [max(num_cols - i, 1-(num_cols%2)) for i in range(num_rows)]
             elif choice == 2:   # single pyramid up
-                print('single pyramid')
-                cols_list = [max(num_cols - (num_rows-i-1)*2, 2-(num_rows%2)) for i in range(num_rows)]
+                cols_list = [max(num_cols - (num_rows-i-1), 1-(num_cols%2)) for i in range(num_rows)]
             elif choice == 3:   # double pyramid down-up (hourglass)
-                print('double pyramid down-up (hourglass)')
                 middle = num_rows//2 + num_rows%2
-                print(f'middle: {middle}')
                 for i in range(num_rows):
-                    print(i)
                     if i < middle:
                         cols_list.append(max(num_cols - i*2, 2-(num_rows%2)))
-                        print(f'D-col {i}: {num_cols - i*2} VS {2-(num_rows%2)} / {cols_list}')
                     else:
                         cols_list.append(max(num_cols - ((num_rows-middle)-(i-middle)-1)*2, 2-(num_rows%2)))
-                        print(f'U-col {i}: {num_cols - ((num_rows-middle)-(i-middle)-1)*2} VS {2-(num_rows%2)} / {cols_list}')
-                print(cols_list)
             elif choice == 4:   # double pyramid up-down
-                print('double pyramid up-down')
                 middle = num_rows//2 + num_rows%2
                 for i in range(num_rows):
-                    print(i)
                     if i < middle:
                         cols_list.append(max(num_cols - (middle-i-1)*2, 2-(num_rows%2)))
-                        print(f'U-col {i}: {num_cols - (middle-i-1)*2} VS {2-(num_rows%2)} / {cols_list}')
                     else:
                         cols_list.append(max(num_cols - (i-middle+num_rows%2)*2, 2-(num_rows%2)))
-                        print(f'D-col {i}: {num_cols - (i-middle+num_rows%2)*2} VS {2-(num_rows%2)} / {cols_list}')
-                print(cols_list)
         else:
             cols_list = [num_cols for _ in range(num_rows)]
 
-        if multiple_pattern:
+        if pattern == Pattern.MULTIPLE:
             for i in range(num_rows):
                 skip = random.choice([True, False])
                 if skip:
@@ -256,21 +231,16 @@ class LevelMaker:
                         alt_pattern_list[i] = 1
                     else:
                         alt_pattern_list[i] = 0
-            print('----MULTI')
-            print(f'skip_flags: {skip_flags}')
-            print(f'skip_pattern_list: {skip_pattern_list}')
-            print(f'alt_flags: {alt_flags}')
-            print(f'alt_pattern_list: {alt_pattern_list}')
         
         # for debugging
         num_bricks = 0
         difficulty = 0
         print(f'LEVEL {level}')
-        print(f'SELECTION >>> STR: {clf.calculate_brick_strength(selected_tier, selected_color)} (T{selected_tier}-C{selected_color})')
-        print(f'\twith ALTER {alt_pattern}')
-        print(f'\twith SKIP  {skip_pattern}')
-        print(f'\twith PYRA  {pyramid_pattern}')
-        print(f'\twith MULTI {multiple_pattern}')
+        # print(f'SELECTION >>> STR: {clf.calculate_brick_strength(selected_tier, selected_color)} (T{selected_tier}-C{selected_color})')
+        # print(f'\twith ALTER {alt_pattern}')
+        # print(f'\twith SKIP  {skip_pattern}')
+        # print(f'\twith PYRA  {pyramid_pattern}')
+        # print(f'\twith MULTI {multiple_pattern}')
 
         for y in range(num_rows):
             alt_pattern = alt_pattern_list[y]
@@ -281,10 +251,11 @@ class LevelMaker:
 
             col = cols_list[y]
 
-            if multiple_pattern:
-                print(f'row: {y}')
-                print(f'\twith ALTER {alt_pattern} ({alt_flag})')
-                print(f'\twith SKIP  {skip_pattern} ({skip_flag})')
+            bricks.append([])
+            # if multiple_pattern:
+            #     print(f'row: {y}')
+            #     print(f'\twith ALTER {alt_pattern} ({alt_flag})')
+            #     print(f'\twith SKIP  {skip_pattern} ({skip_flag})')
 
             for x in range(col):
                 if skip_pattern and skip_flag:
@@ -313,12 +284,56 @@ class LevelMaker:
                     b.color = selected_color
                     b.tier = selected_tier
 
-                bricks.append(b)
+                bricks[y].append(b)
                 num_bricks += 1
-                difficulty += clf.calculate_brick_strength(b.tier, b.color)
+                difficulty += clf.calculate_brick_strength(b.tier, b.color) + 1
         
         print(f'dimension: {num_rows} x {num_cols}')
-        print(f'Difficulty: {difficulty} >>> ({num_bricks})\n')
+        print(f'INITIAL: {prev_diff} + ({difficulty - prev_diff}) >>> {difficulty}')
+
+        # Recursive Update
+        row = 0
+        brick_not_exceed = True
+        while difficulty < prev_diff and brick_not_exceed:
+            cur_diff = prev_diff - difficulty
+            threshold = random.choices([1, 2], weights=[0.7, 0.3])[0]
+            choice = random.randint(1, 3)
+            print(f'>>> CMP: {cur_diff} / {threshold} @C{choice}')
+
+            cols = len(bricks[row])
+            for i, brick in enumerate(bricks[row]):
+                if choice == 1 or cols <= 2:        # 1 - add whole row
+                    increase = threshold
+                elif choice == 2 and cols%2 == 1:   # 2.1 - odd alternate
+                    if i%2 == 1:
+                        increase = threshold*2
+                    else:
+                        increase = 0
+                elif choice == 2 and cols%2 == 0:   # 2.2 - even alternate
+                    if i in [0, cols//2-1, cols//2, cols-1]:
+                        increase = threshold*2
+                    else:
+                        increase = 0
+                elif choice == 3:                   # 3 - skip
+                    break
+
+                new_brick_strength  = clf.calculate_brick_strength(brick.tier, brick.color) + increase
+                if new_brick_strength > MAX_BRICK_STRENGTH:
+                    brick_not_exceed = False
+                    break
+
+                difficulty += increase
+
+                brick.tier, brick.color = clf.derive_tier_and_color(new_brick_strength)
+            
+            row += 1
+            if row == num_rows:
+                row = 0
+        
+        print(f'!FINAL: {prev_diff} + ({difficulty - prev_diff}) >>> {difficulty}\n')
+        
+        prev_diff = difficulty
+        bricks = [brick for bricks_row in bricks for brick in bricks_row]
 
         if len(bricks) == 0:
             return LevelMaker.CreateMap(level)
