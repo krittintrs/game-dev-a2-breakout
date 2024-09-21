@@ -1,6 +1,8 @@
 import pygame
 from src.constants import *
 from src.Dependency import *
+import src.tween as tween
+import random
 
 brick_image_name_list = [
     "b_blue_0",
@@ -47,11 +49,35 @@ class Brick:
         self.tier = 0
         self.unbreakable = True
 
+    def Moving(self, start_x, end_x):
+        self.Unbreaking()
+        self.movable = True
+
+        x_diff = self.x - start_x
+        total_diff = end_x - start_x
+        ratio = x_diff / total_diff
+
+        def initial_move_right():
+            tween.to(self.rect, 'x', end_x - self.width, 
+                     MOVING_BRICK_TIMER*(1-ratio)).on_complete(move_left)
+        def initial_move_left():
+            tween.to(self.rect, 'x', start_x, 
+                     MOVING_BRICK_TIMER*ratio).on_complete(move_right)
+        def move_right():
+            tween.to(self.rect, 'x', end_x - self.width, 
+                     MOVING_BRICK_TIMER).on_complete(move_left)
+        def move_left():
+            tween.to(self.rect, 'x', start_x, 
+                     MOVING_BRICK_TIMER).on_complete(move_right)
+
+        if random.choices([True, False]):
+            initial_move_right()
+        else:
+            initial_move_left()
+
     def Hit(self):
         if self.unbreakable:
-            print('UNBREAK HIT!!!')
-            # TODO: add sound
-            # gSounds['brick-hit-unbreakable'].play()
+            gSounds['brick-hit-unbreakable'].play()
         else:
             gSounds['brick-hit2'].play()
             
@@ -72,8 +98,9 @@ class Brick:
                 gSounds['brick-hit1'].play()
 
     def update(self, dt):
-        pass
-
+        if self.movable:
+            tween.update(dt)
+        
     def render(self, screen):
         if self.alive:
             screen.blit(

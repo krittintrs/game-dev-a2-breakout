@@ -69,7 +69,7 @@ class PlayState(BaseState):
 
         for k, brick in enumerate(self.bricks):
             if brick.unbreakable and brick.movable:
-                pass
+                brick.update(dt)
             if brick.alive and self.ball.Collides(brick):
                 if not brick.unbreakable:
                     self.score = self.score + (brick.tier * 200 + brick.color * 25)
