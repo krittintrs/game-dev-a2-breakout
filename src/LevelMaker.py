@@ -168,7 +168,8 @@ class LevelMaker:
             threshold = (level-STAGE2)*0.05
             unbreakable = random.choices([0, 1, 2], weights=[0.6 - threshold, 0.3 + threshold/2, 0.1 + threshold/2])[0]
         else:
-            unbreakable = random.choices([2, 3, 4], weights=[0.4, 0.3, 0.3])[0]
+            threshold = max((level-STAGE2)*0.01, 0.03)
+            unbreakable = random.choices([2, 3, 4], weights=[0.3 - threshold/2, 0.3 - threshold/2, 0.4 + threshold])[0]
         
         return unbreakable
 
@@ -366,35 +367,62 @@ class LevelMaker:
             if unbreakable == 1:    # pattern unbreakable
                 if choice:
                     if cols%2 == 1:
-                        bricks[chosen_row][middle-1].Unbreakable()
-                        bricks[chosen_row][middle].Unbreakable()
-                        bricks[chosen_row][middle+1].Unbreakable()
+                        bricks[chosen_row][middle-1].Unbreaking()
+                        bricks[chosen_row][middle].Unbreaking()
+                        bricks[chosen_row][middle+1].Unbreaking()
                     else:
-                        bricks[chosen_row][middle-1].Unbreakable()
-                        bricks[chosen_row][middle].Unbreakable()
+                        bricks[chosen_row][middle-1].Unbreaking()
+                        bricks[chosen_row][middle].Unbreaking()
                 else:
                     if cols%2 == 1:
-                        bricks[chosen_row][middle-2].Unbreakable()
-                        bricks[chosen_row][middle-1].Unbreakable()
-                        bricks[chosen_row][middle+1].Unbreakable()
-                        bricks[chosen_row][middle+2].Unbreakable()
+                        bricks[chosen_row][middle-2].Unbreaking()
+                        bricks[chosen_row][middle-1].Unbreaking()
+                        bricks[chosen_row][middle+1].Unbreaking()
+                        bricks[chosen_row][middle+2].Unbreaking()
                     else:
-                        bricks[chosen_row][middle-2].Unbreakable()
-                        bricks[chosen_row][middle-1].Unbreakable()
-                        bricks[chosen_row][middle].Unbreakable()
-                        bricks[chosen_row][middle+1].Unbreakable()
+                        bricks[chosen_row][middle-2].Unbreaking()
+                        bricks[chosen_row][middle-1].Unbreaking()
+                        bricks[chosen_row][middle].Unbreaking()
+                        bricks[chosen_row][middle+1].Unbreaking()
             elif unbreakable == 2:  # alternate unbreakable
                 for i, brick in enumerate(bricks[chosen_row]):
                     if i%2 == choice:
-                        brick.Unbreakable()
+                        brick.Unbreaking()
             elif unbreakable == 3:  # whole row unbreakable
                 for i, brick in enumerate(bricks[chosen_row]):
                     if cols%2 == 1 and i not in [0, middle, cols-1]:
-                        brick.Unbreakable()
+                        brick.Unbreaking()
                     elif cols%2 == 0 and i not in [0, middle-1, middle, cols-1]:
-                        brick.Unbreakable()
-            elif unbreakable == 4:  # moving unbreakable
-                pass
+                        brick.Unbreaking()
+            elif unbreakable == 4:  # outer unbreakable
+                unbreak_pattern = [
+                    [0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0],
+                    [0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0],
+                    [0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
+                    [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+                ]
+                if num_rows <= 5:
+                    outer_location = 8
+                else:
+                    outer_location = 9
+                y_offset = outer_location*BRICK_HEIGHT
+                unbreak_row_pattern = unbreak_pattern[random.randint(0, 3)]
+                unbreak_row = []
+                for x, place in enumerate(unbreak_row_pattern):
+                    if not place:
+                        continue
+                    
+                    x_offset = (WIDTH - 13*BRICK_WIDTH)/2
+
+                    b = Brick(
+                        x * BRICK_WIDTH + x_offset, 
+                        y_offset
+                    )
+
+                    b.Unbreaking()
+
+                    unbreak_row.append(b)
+                bricks.append(unbreak_row)
         
         prev_diff = difficulty
         bricks = [brick for bricks_row in bricks for brick in bricks_row]

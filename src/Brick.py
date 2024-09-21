@@ -39,9 +39,10 @@ class Brick:
 
         self.alive = True
         self.unbreakable = False
+        self.movable = False
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
 
-    def Unbreakable(self):
+    def Unbreaking(self):
         self.color = 5
         self.tier = 0
         self.unbreakable = True
