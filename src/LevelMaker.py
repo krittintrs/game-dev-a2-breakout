@@ -81,6 +81,7 @@ class LevelMaker:
             pattern = Pattern.DEFAULT
 
         elif STAGE1 < level:
+            # constraint
             if STAGE1 < level < STAGE2:
                 MIN_ROW = STAGE1_MIN_ROW
                 MAX_ROW = STAGE1_MAX_ROW
@@ -97,17 +98,20 @@ class LevelMaker:
                 MIN_COL = STAGE3_MIN_COL
                 MAX_COL = STAGE3_MAX_COL
 
+            # selected brick strength
             if level < STAGE3:
                 selected_brick_strength = (level-1)//3
             else:
-                selected_brick_strength = min((level-1)//2, MAX_BRICK_STRENGTH)
+                inc_str = random.choices([0, 1], weights=[0.7, 0.3])[0]
+                selected_brick_strength = min(prev_brick_strength + inc_str, MAX_BRICK_STRENGTH)
             selected_tier, selected_color = cls.derive_tier_and_color(selected_brick_strength)
             print(f'SELECTED STR: {selected_brick_strength} (T{selected_tier}-C{selected_color})')
             
+            # default alternate & pattern
             alt_strength, alt_tier, alt_color = selected_brick_strength, selected_tier, selected_color
-            
             pattern = Pattern.DEFAULT
 
+            # if STR increased
             if selected_brick_strength > prev_brick_strength:
                 print('??? STR UP ???')
                 num_rows = min(max(prev_rows + random.randint(-1, 0), MIN_ROW), MAX_ROW)
@@ -124,9 +128,10 @@ class LevelMaker:
                     pattern = Pattern.MULTIPLE
                 else:
                     pattern = Pattern.PYRAMID
-
+            # if STR the same
             else:
                 if random.choice([True, False]):
+                    # 1 - increase ROW, possibly decrease COL
                     print('??? SAME STR - ROW UP & COL MIGHT DOWN ???')
                     num_rows = min(prev_rows + 1, MAX_ROW)
 
@@ -138,6 +143,7 @@ class LevelMaker:
                     else:
                         pattern = Pattern.PYRAMID
                 else:
+                    # 1 - increase COL, sane ROW
                     print('??? SAME STR - COL UP & SAME ROW ???')
                     num_rows = max(prev_rows, MIN_ROW)
                     num_cols = min(max(prev_cols + 2, MIN_COL), MAX_COL) 
@@ -147,6 +153,7 @@ class LevelMaker:
                     alt_tier, alt_color = cls.derive_tier_and_color(alt_strength)
                     pattern = Pattern.ALT
 
+        # store previous value for next level
         prev_rows = num_rows
         prev_cols = num_cols
         prev_brick_strength = selected_brick_strength
@@ -181,7 +188,11 @@ class LevelMaker:
             # ensure not skip more than 2-3 rows
             skip_pattern_list = [1 for _ in range(num_rows)]
             skip_count = skip_pattern_list.count(1)
-            while skip_count > 3:
+            if num_rows < 4:
+                skip_threshold = 3
+            else:
+                skip_threshold = 2
+            while skip_count > skip_threshold:
                 skip_indices = [i for i, val in enumerate(skip_pattern_list) if val == 1]
                 index_to_convert = random.choice(skip_indices)
                 skip_pattern_list[index_to_convert] = 0
