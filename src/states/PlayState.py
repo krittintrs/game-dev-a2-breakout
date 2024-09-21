@@ -68,8 +68,11 @@ class PlayState(BaseState):
             gSounds['paddle-hit'].play()
 
         for k, brick in enumerate(self.bricks):
+            if brick.unbreakable and brick.movable:
+                pass
             if brick.alive and self.ball.Collides(brick):
-                self.score = self.score + (brick.tier * 200 + brick.color * 25)
+                if not brick.unbreakable:
+                    self.score = self.score + (brick.tier * 200 + brick.color * 25)
                 brick.Hit()
 
                 if self.score > self.recover_points:
