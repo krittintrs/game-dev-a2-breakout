@@ -28,8 +28,8 @@ brick_image_name_list = [
 
 class Brick:
     def __init__(self, x, y):
-        self.tier=0   #n->0
-        self.color=0  #4->0
+        self.tier=0   # 0 - 3
+        self.color=0  # 0 - 4
 
         self.x=x
         self.y=y
@@ -38,30 +38,37 @@ class Brick:
         self.height = BRICK_HEIGHT
 
         self.alive = True
+        self.unbreakable = False
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
 
+    def Unbreakable(self):
+        self.color = 5
+        self.tier = 0
+        self.unbreakable = True
+
     def Hit(self):
-        gSounds['brick-hit2'].play()
-        # print(f'\nhit brick >> tier: {self.tier} / color: {self.color} / image_idx: {brick_image_name_list[(self.color-1)*4 + self.tier]}')
-
-        if self.tier > 0:
-            if self.color == 0:
-                self.tier = self.tier - 1
-                self.color = 4
-            else:
-                self.color = self.color - 1
-
+        if self.unbreakable:
+            print('UNBREAK HIT!!!')
+            # TODO: add sound
+            # gSounds['brick-hit-unbreakable'].play()
         else:
-            if self.color == 0:
-                self.alive = False
+            gSounds['brick-hit2'].play()
+            
+            if self.tier > 0:
+                if self.color == 0:
+                    self.tier = self.tier - 1
+                    self.color = 4
+                else:
+                    self.color = self.color - 1
+
             else:
-                self.color = self.color - 1
+                if self.color == 0:
+                    self.alive = False
+                else:
+                    self.color = self.color - 1
 
-        if not self.alive:
-            gSounds['brick-hit1'].play()
-
-        # print(f'          >> tier: {self.tier} / color: {self.color} / image_idx: {brick_image_name_list[(self.color-1)*4 + self.tier]}')
-
+            if not self.alive:
+                gSounds['brick-hit1'].play()
 
     def update(self, dt):
         pass

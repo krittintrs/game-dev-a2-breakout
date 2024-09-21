@@ -161,10 +161,23 @@ class LevelMaker:
         return num_rows, num_cols, selected_tier, selected_color, alt_tier, alt_color, pattern
     
     @classmethod
+    def unbreakableGenerator(clf, level):
+        if level < STAGE2:
+            unbreakable = 0
+        elif STAGE2 <= level < STAGE3:
+            threshold = (level-STAGE2)*0.05
+            unbreakable = random.choices([0, 1, 2], weights=[0.6 - threshold, 0.3 + threshold/2, 0.1 + threshold/2])[0]
+        else:
+            unbreakable = random.choices([2, 3, 4], weights=[0.4, 0.3, 0.3])[0]
+        
+        return unbreakable
+
+    @classmethod
     def CreateMap(clf, level):
         bricks = []
         
         num_rows, num_cols, selected_tier, selected_color, alt_tier, alt_color, pattern = clf.levelGenerator(level)
+        unbreakable = clf.unbreakableGenerator(level)
 
         global prev_diff
         if level == 1:
@@ -175,6 +188,7 @@ class LevelMaker:
         else:
             y_offset = 0
 
+        # Alternate Pattern
         if pattern == Pattern.ALT: 
             alt_pattern_list = [1 for _ in range(num_rows)]
             alt_flags = clf.generate_flags(num_rows)
@@ -184,6 +198,7 @@ class LevelMaker:
             alt_pattern_list = [0 for _ in range(num_rows)]
             alt_flags = [0 for _ in range(num_rows)]
 
+        # Skip Pattern
         if pattern == Pattern.SKIP:
             # ensure not skip more than 2-3 rows
             skip_pattern_list = [1 for _ in range(num_rows)]
@@ -197,7 +212,7 @@ class LevelMaker:
                 index_to_convert = random.choice(skip_indices)
                 skip_pattern_list[index_to_convert] = 0
                 skip_count = skip_pattern_list.count(1)
-            
+            # generate skip flag for each row
             if num_rows == 1:
                 skip_flags = [1]
             else:
@@ -206,6 +221,7 @@ class LevelMaker:
             skip_pattern_list = [0 for _ in range(num_rows)]
             skip_flags = [0 for _ in range(num_rows)]
 
+        # Pyramid Pattern
         if pattern == Pattern.PYRAMID:
             choice = random.randint(1, 4)
             cols_list = []
@@ -230,6 +246,7 @@ class LevelMaker:
         else:
             cols_list = [num_cols for _ in range(num_rows)]
 
+        # Multiple Pattern (Alternate & Skip)
         if pattern == Pattern.MULTIPLE:
             for i in range(num_rows):
                 skip = random.choice([True, False])
@@ -243,16 +260,9 @@ class LevelMaker:
                     else:
                         alt_pattern_list[i] = 0
         
-        # for debugging
+        # Brick Construction
         num_bricks = 0
         difficulty = 0
-        print(f'LEVEL {level}')
-        # print(f'SELECTION >>> STR: {clf.calculate_brick_strength(selected_tier, selected_color)} (T{selected_tier}-C{selected_color})')
-        # print(f'\twith ALTER {alt_pattern}')
-        # print(f'\twith SKIP  {skip_pattern}')
-        # print(f'\twith PYRA  {pyramid_pattern}')
-        # print(f'\twith MULTI {multiple_pattern}')
-
         for y in range(num_rows):
             alt_pattern = alt_pattern_list[y]
             alt_flag = alt_flags[y]
@@ -299,7 +309,10 @@ class LevelMaker:
                 num_bricks += 1
                 difficulty += clf.calculate_brick_strength(b.tier, b.color) + 1
         
+        # Debug
+        print(f'LEVEL {level}')
         print(f'dimension: {num_rows} x {num_cols}')
+        print(f'pattern: {pattern}')
         print(f'INITIAL: {prev_diff} + ({difficulty - prev_diff}) >>> {difficulty}')
 
         # Recursive Update
@@ -342,6 +355,46 @@ class LevelMaker:
                 row = 0
         
         print(f'!FINAL: {prev_diff} + ({difficulty - prev_diff}) >>> {difficulty}\n')
+
+        # Unbreakable Feature
+        if unbreakable > 0:
+            print(f'unbreakable: {unbreakable}')
+            chosen_row = random.randint(2, num_rows-1)
+            choice = random.randint(0, 1)
+            cols = len(bricks[chosen_row])
+            middle = cols//2
+            if unbreakable == 1:    # pattern unbreakable
+                if choice:
+                    if cols%2 == 1:
+                        bricks[chosen_row][middle-1].Unbreakable()
+                        bricks[chosen_row][middle].Unbreakable()
+                        bricks[chosen_row][middle+1].Unbreakable()
+                    else:
+                        bricks[chosen_row][middle-1].Unbreakable()
+                        bricks[chosen_row][middle].Unbreakable()
+                else:
+                    if cols%2 == 1:
+                        bricks[chosen_row][middle-2].Unbreakable()
+                        bricks[chosen_row][middle-1].Unbreakable()
+                        bricks[chosen_row][middle+1].Unbreakable()
+                        bricks[chosen_row][middle+2].Unbreakable()
+                    else:
+                        bricks[chosen_row][middle-2].Unbreakable()
+                        bricks[chosen_row][middle-1].Unbreakable()
+                        bricks[chosen_row][middle].Unbreakable()
+                        bricks[chosen_row][middle+1].Unbreakable()
+            elif unbreakable == 2:  # alternate unbreakable
+                for i, brick in enumerate(bricks[chosen_row]):
+                    if i%2 == choice:
+                        brick.Unbreakable()
+            elif unbreakable == 3:  # whole row unbreakable
+                for i, brick in enumerate(bricks[chosen_row]):
+                    if cols%2 == 1 and i not in [0, middle, cols-1]:
+                        brick.Unbreakable()
+                    elif cols%2 == 0 and i not in [0, middle-1, middle, cols-1]:
+                        brick.Unbreakable()
+            elif unbreakable == 4:  # moving unbreakable
+                pass
         
         prev_diff = difficulty
         bricks = [brick for bricks_row in bricks for brick in bricks_row]
