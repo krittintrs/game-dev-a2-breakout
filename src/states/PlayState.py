@@ -17,7 +17,10 @@ class PlayState(BaseState):
         self.high_scores = params['high_scores']
         self.ball = params['ball']
         self.level = params['level']
+
         self.power_ups = []
+        self.power_up_timers = {}
+        self.paddle.Reset()
 
         self.recover_points = 5000
 
@@ -82,6 +85,7 @@ class PlayState(BaseState):
                     # FIXME : change power-up spawn rate
                     if random.random() < 0.9:  # 20% chance to spawn power-up
                         power_up_type = random.choice([PowerUpType.LASER_PADDLE, PowerUpType.EXTENDED_PADDLE, PowerUpType.BOMB_BALL])
+                        power_up_type = PowerUpType.EXTENDED_PADDLE
                         power_up = PowerUp(brick.x, brick.y, power_up_type)
                         self.power_ups.append(power_up)  # Add power-up to the active list
 
@@ -94,6 +98,9 @@ class PlayState(BaseState):
 
                 if self.CheckVictory():
                     gSounds['victory'].play()
+
+                    for power_up in self.power_ups:
+                        self.deactivate_powerup(power_up.type)
 
                     g_state_manager.Change('victory', {
                         'level':self.level,
@@ -135,6 +142,9 @@ class PlayState(BaseState):
             self.health -= 1
             gSounds['hurt'].play()
 
+            for power_up in self.power_ups:
+                self.deactivate_powerup(power_up.type)
+
             if self.health == 0:
                 g_state_manager.Change('game-over', {
                     'score':self.score,
@@ -164,6 +174,13 @@ class PlayState(BaseState):
             elif power_up.y > HEIGHT:
                 self.power_ups.remove(power_up)
 
+        # Update timers for active power-ups
+        for power_up_type, time_left in list(self.power_up_timers.items()):
+            self.power_up_timers[power_up_type] -= dt
+            if self.power_up_timers[power_up_type] <= 0:
+                self.deactivate_powerup(power_up_type)
+                del self.power_up_timers[power_up_type]
+    
     def Exit(self):
         pass
 
@@ -220,8 +237,18 @@ class PlayState(BaseState):
 
     def activate_extended_paddle(self):
         """Extend paddle size for a limited time."""
-        # TODO : Temporarily increase paddle size
+        if PowerUpType.EXTENDED_PADDLE not in self.power_up_timers:
+            self.paddle.IncreasePadSize()
+            self.paddle.start_blinking()
+            self.power_up_timers[PowerUpType.EXTENDED_PADDLE] = 3  # Power-up lasts for 10 seconds
+            
 
     def activate_bomb_ball(self):
         """Activate bomb ball effect."""
         # TODO : Change the ball into a bomb ball temporarily
+
+    def deactivate_powerup(self, power_up_type):
+        """Deactivate power-up effects when the timer runs out."""
+        if power_up_type == PowerUpType.EXTENDED_PADDLE:
+            self.paddle.DecreasePadSize()
+            self.paddle.start_blinking()

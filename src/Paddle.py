@@ -10,21 +10,47 @@ class Paddle:
 
         self.dx = 0
 
-        self.size = 2
+        self.scale = 3
+        self.width = self.scale * PADDLE_WIDTH_DEFAULT   # 64 * 3 (scale)
+        self.height = self.scale * 16                    # 16 * 3 (scale)
 
-        self.width = self.size * 96 # 2 * 32 * 3 (scale)
-        self.height = 48   # 16 * 3 (scale)
-
-        self.SetImage(skin)
+        self.skin = skin
+        self.isLarge = False
+        self.SetImage()
 
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
 
-        self.mode = 'AI'  # Start in AI mode
-        # self.mode = 'PLAYER'
+        # self.mode = 'AI'  # Start in AI mode
+        self.mode = 'PLAYER'
 
-    def SetImage(self, skin):
-        self.skin = skin
-        self.image = paddle_image_list[self.skin - 1]
+        # Blink effect variables
+        self.blink_timer = 0
+        self.blinking = False
+        self.blink_interval = 0.2  # Time in seconds between blinks
+        self.blink_duration = 1    # Total blink duration in seconds (1 sec blink)
+        self.blink_time_remaining = 0
+
+    def SetImage(self):
+        if not self.isLarge:
+            self.image = paddle_image_list[self.skin - 1]
+        else:
+            self.image = large_paddle_image_list[self.skin - 1]
+
+    def Reset(self):
+        self.DecreasePadSize()
+        self.stop_blinking()
+    
+    def IncreasePadSize(self):
+        self.isLarge = True
+        self.width = self.scale * PADDLE_WIDTH_LARGE
+        self.rect.width = self.width
+        self.SetImage()
+
+    def DecreasePadSize(self):
+        self.isLarge = False
+        self.width = self.scale * PADDLE_WIDTH_DEFAULT
+        self.rect.width = self.width
+        self.SetImage()
 
     def predict_ball_x(self, ball):
         """
@@ -59,6 +85,7 @@ class Paddle:
             else:
                 self.rect.x = min(WIDTH - self.width, self.rect.x + self.dx * dt)
 
+        # FIXME : convert back to human
         elif self.mode == 'AI':
             # AI control logic
             target_x = self.predict_ball_x(ball)
@@ -75,6 +102,34 @@ class Paddle:
                 self.rect.x = max(0, self.rect.x + self.dx * dt)
             else:
                 self.rect.x = min(WIDTH - self.width, self.rect.x + self.dx * dt)
+        
+        # Handle blinking effect timer
+        if self.blinking:
+            self.blink_timer += dt
+            self.blink_time_remaining -= dt
+            if self.blink_time_remaining <= 0:
+                self.blinking = False  # Stop blinking after 1 second
+
+            if self.blink_timer >= self.blink_interval:
+                self.blink_timer = 0  # Reset the blink interval timer
+
+    def start_blinking(self):
+        """Start the blinking effect."""
+        self.blinking = True
+        self.blink_timer = 0
+        self.blink_time_remaining = self.blink_duration
+
+    def stop_blinking(self):
+        """Stop the blinking effect."""
+        self.blinking = False
+        self.blink_timer = self.blink_interval
+        self.blink_time_remaining = 0
 
     def render(self, screen):
-        screen.blit(self.image, (self.rect.x, self.rect.y))
+        """Render the paddle with optional blinking effect."""
+        if self.blinking and self.blink_timer < self.blink_interval / 2:
+            # During the first half of the blink interval, draw a white paddle
+            pygame.draw.rect(screen, (255, 255, 255), self.rect, border_radius=20)
+        else:
+            # Otherwise, draw the paddle's normal image
+            screen.blit(self.image, (self.rect.x, self.rect.y))
