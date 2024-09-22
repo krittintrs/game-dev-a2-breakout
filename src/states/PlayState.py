@@ -82,21 +82,25 @@ class PlayState(BaseState):
                 if self.ball.isBomb:
                     gSounds['bomb'].play()
 
-                    # Calculate score for the brick
-                    print(f'Brick color: {brick.color}, Brick tier: {brick.tier}')
-                    color_score = [25, 50, 75, 100, 125]
-                    current_tier_score = sum(color_score[:brick.color + 1])
-                    if brick.tier > 0:
-                        current_tier_inc = brick.tier * 200 * (brick.color + 1)
-                        current_tier_score += current_tier_inc
-                        tier_score = [375, 1375, 2375, 3375]
-                        prev_tier_score = sum(tier_score[:brick.tier])
+                    if not brick.unbreakable:
+                        # Calculate score for the brick
+                        print(f'Brick color: {brick.color}, Brick tier: {brick.tier}')
+                        color_score = [25, 50, 75, 100, 125]
+                        current_tier_score = sum(color_score[:brick.color + 1])
+                        if brick.tier > 0:
+                            current_tier_inc = brick.tier * 200 * (brick.color + 1)
+                            current_tier_score += current_tier_inc
+                            tier_score = [375, 1375, 2375, 3375]
+                            prev_tier_score = sum(tier_score[:brick.tier])
+                        else:
+                            prev_tier_score = 0
+                        # print(f'Current tier score: {current_tier_score} = {sum(color_score[:brick.color + 1])} + {current_tier_inc}, Previous tier score: {prev_tier_score}')
+                        bomb_score = 250
+                        self.score += current_tier_score + prev_tier_score + bomb_score
+                        brick.alive = False
+                        isDestroyed = True
                     else:
-                        prev_tier_score = 0
-                    # print(f'Current tier score: {current_tier_score} = {sum(color_score[:brick.color + 1])} + {current_tier_inc}, Previous tier score: {prev_tier_score}')
-                    bomb_score = 250
-                    self.score += current_tier_score + prev_tier_score + bomb_score
-                    brick.alive = False
+                        isDestroyed = False
 
                     # Destroy nearby bricks
                     for other_brick in self.bricks:
@@ -117,15 +121,16 @@ class PlayState(BaseState):
                     explosion = Explosion(self.ball.rect.centerx, self.ball.rect.centery)
                     self.explosions.append(explosion)
                     self.ball.StopBombBall()
-                    isDestroyed = True
                 else:
                     isDestroyed = brick.Hit()
 
                 if isDestroyed:
-                    # FIXME : change power-up spawn rate
-                    if random.random() < 0.9:  # 20% chance to spawn power-up
-                        power_up_type = random.choice([PowerUpType.LASER_PADDLE, PowerUpType.EXTENDED_PADDLE, PowerUpType.BOMB_BALL])
-                        power_up_type = PowerUpType.BOMB_BALL
+                    offset = self.level * 0.02
+                    if random.random() < 0.2 + offset:  # 20% chance to spawn power-up
+                        power_up_type = random.choices(
+                            [PowerUpType.LASER_PADDLE, PowerUpType.EXTENDED_PADDLE, PowerUpType.BOMB_BALL],
+                            weights=[0.2, 0.5, 0.3]
+                        )[0]
                         power_up = PowerUp(brick.x, brick.y, power_up_type)
                         self.power_ups.append(power_up)  # Add power-up to the active list
 
@@ -285,12 +290,14 @@ class PlayState(BaseState):
     def activate_extended_paddle(self):
         """Extend paddle size for a limited time."""
         if PowerUpType.EXTENDED_PADDLE not in self.power_up_timers:
+            gSounds['powerup_paddle'].play()
             self.paddle.IncreasePadSize()
             self.paddle.start_blinking()
             self.power_up_timers[PowerUpType.EXTENDED_PADDLE] = POWERUP_TIMER
             
     def activate_bomb_ball(self):
         """Activate bomb ball effect."""
+        gSounds['powerup_bomb'].play()  
         self.ball.StartBombBall()
 
     def deactivate_powerup(self, power_up_type):
