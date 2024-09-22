@@ -22,6 +22,7 @@ class PlayState(BaseState):
         self.power_up_timers = {}
         self.paddle.Reset()
         self.explosions = []
+        self.lasers = []
 
         self.recover_points = 5000
 
@@ -77,14 +78,15 @@ class PlayState(BaseState):
             if brick.alive and self.ball.Collides(brick):
                 if not brick.unbreakable:
                     self.score = self.score + (brick.tier * 200 + (brick.color+1) * 25)
-                    print(self.score)
+                    # print(self.score)
                 
+                # Bomb ball effect
                 if self.ball.isBomb:
                     gSounds['bomb'].play()
 
                     if not brick.unbreakable:
                         # Calculate score for the brick
-                        print(f'Brick color: {brick.color}, Brick tier: {brick.tier}')
+                        # print(f'Brick color: {brick.color}, Brick tier: {brick.tier}')
                         color_score = [25, 50, 75, 100, 125]
                         current_tier_score = sum(color_score[:brick.color + 1])
                         if brick.tier > 0:
@@ -114,9 +116,11 @@ class PlayState(BaseState):
                             distance_3 = (distance_x_left ** 2 + distance_y_bottom ** 2) ** 0.5
                             distance_4 = (distance_x_right ** 2 + distance_y_bottom ** 2) ** 0.5
                             if distance_1 < BOMB_RANGE or distance_2 < BOMB_RANGE or distance_3 < BOMB_RANGE or distance_4 < BOMB_RANGE:
-                                other_brick.Hit()
+                                isBombDestroyed = other_brick.Hit()
                                 other_brick.start_blinking()
                                 self.score += (other_brick.tier * 200 + (other_brick.color + 1) * 25)
+                                if isBombDestroyed:
+                                    self.spawn_powerup(brick)
                     
                     explosion = Explosion(self.ball.rect.centerx, self.ball.rect.centery)
                     self.explosions.append(explosion)
@@ -124,16 +128,11 @@ class PlayState(BaseState):
                 else:
                     isDestroyed = brick.Hit()
 
+                # if brick is destoryed, may spawn power-up
                 if isDestroyed:
-                    offset = self.level * 0.02
-                    if random.random() < 0.2 + offset:  # 20% chance to spawn power-up
-                        power_up_type = random.choices(
-                            [PowerUpType.LASER_PADDLE, PowerUpType.EXTENDED_PADDLE, PowerUpType.BOMB_BALL],
-                            weights=[0.2, 0.5, 0.3]
-                        )[0]
-                        power_up = PowerUp(brick.x, brick.y, power_up_type)
-                        self.power_ups.append(power_up)  # Add power-up to the active list
+                    self.spawn_powerup(brick)
 
+                # recovery health
                 if self.score > self.recover_points:
                     self.health = min(3, self.health + 1)
                     self.recover_points = min(100000, self.recover_points * 2)
@@ -141,6 +140,7 @@ class PlayState(BaseState):
                     gSounds['recover'].play()
                     #music_channel.play(sounds_list['recover'])
 
+                # check if all bricks are destroyed
                 if self.CheckVictory():
                     gSounds['victory'].play()
 
@@ -182,7 +182,8 @@ class PlayState(BaseState):
                     self.ball.dy = self.ball.dy * 1.02
 
                 break
-
+        
+        # if paddle misses the ball
         if self.ball.rect.y >= HEIGHT:
             self.health -= 1
             gSounds['hurt'].play()
@@ -212,7 +213,7 @@ class PlayState(BaseState):
 
             # Check if power-up is collected by the paddle
             if self.check_powerup_collision(self.paddle, power_up):
-                print(f"Power-up {power_up} collected")
+                # print(f"Power-up {power_up} collected")
                 self.power_ups.remove(power_up)
 
             # Remove power-up if it falls off the screen
@@ -226,9 +227,48 @@ class PlayState(BaseState):
                 self.deactivate_powerup(power_up_type)
                 del self.power_up_timers[power_up_type]
 
+        # Update explosions
         for explosion in self.explosions:
             if not explosion.update(dt):
                 self.explosions.remove(explosion)
+
+        # Update lasers
+        for laser in self.lasers:
+            if not laser.update(dt):
+                self.lasers.remove(laser)  # Remove the laser if it has expired
+                continue
+
+            # If the laser can hit (every 0.5 seconds)
+            if laser.can_hit():
+                gSounds['laser_shoot'].play()
+                for brick in self.bricks:
+                    # Check if the laser intersects with the brick
+                    if brick.rect.x > laser.x + laser.width or brick.rect.x + brick.width < laser.x:
+                        continue
+                    else:
+                        if brick.alive and not brick.unbreakable:
+                            isLaserDestroyed = brick.Hit()
+                            brick.start_blinking()
+                            self.score += (brick.tier * 200 + (brick.color + 1) * 25)
+                            if isLaserDestroyed:
+                                self.spawn_powerup(brick)
+                    
+                    if self.CheckVictory():
+                        gSounds['victory'].play()
+
+                        for power_up in self.power_ups:
+                            self.deactivate_powerup(power_up.type)
+
+                        g_state_manager.Change('victory', {
+                            'level':self.level,
+                            'paddle':self.paddle,
+                            'health':self.health,
+                            'score':self.score,
+                            'high_scores':self.high_scores,
+                            'ball':self.ball,
+                            'recover_points':self.recover_points
+                        })
+                laser.can_hit_now = False  # Reset the hit status
 
     def Exit(self):
         pass
@@ -243,6 +283,9 @@ class PlayState(BaseState):
 
         for explosion in self.explosions:
             explosion.render(screen)
+
+        for laser in self.lasers:
+            laser.render(screen)
 
         self.paddle.render(screen)
         self.ball.render(screen)
@@ -262,6 +305,16 @@ class PlayState(BaseState):
                 return False
 
         return True
+    
+    def spawn_powerup(self, brick):
+        offset = self.level * 0.01
+        if random.random() < 0.4 + offset:  # 20% chance to spawn power-up
+            power_up_type = random.choices(
+                [PowerUpType.LASER_PADDLE, PowerUpType.EXTENDED_PADDLE, PowerUpType.BOMB_BALL],
+                weights=[0.2, 0.5, 0.3]
+            )[0]  
+            power_up = PowerUp(brick.x, brick.y, power_up_type)
+            self.power_ups.append(power_up)  # Add power-up to the active list
 
     def check_powerup_collision(self, paddle, power_up):
         """Check if the paddle collects the power-up."""
@@ -277,15 +330,15 @@ class PlayState(BaseState):
     def activate_powerup(self, power_up):
         """Activates the power-up's effect."""
         if power_up.type == PowerUpType.LASER_PADDLE:
-            self.activate_laser_paddle()
+            self.activate_laser_paddle(power_up.x)
         elif power_up.type == PowerUpType.EXTENDED_PADDLE:
             self.activate_extended_paddle()
         elif power_up.type == PowerUpType.BOMB_BALL:
             self.activate_bomb_ball()
 
-    def activate_laser_paddle(self):
+    def activate_laser_paddle(self, x):
         """Activate laser paddle effect for a limited time."""
-        # TODO : Add code to enable laser shooting for a few seconds
+        self.lasers.append(LaserBeam(x))
 
     def activate_extended_paddle(self):
         """Extend paddle size for a limited time."""

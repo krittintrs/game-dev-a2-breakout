@@ -5,6 +5,7 @@ from src.Ball import Ball
 from src.LevelMaker import *
 from src.PowerUp import *
 from src.Explosion import Explosion
+from src.LaserBeam import LaserBeam
 
 from src.StateMachine import StateMachine
 from src.states.BaseState import BaseState

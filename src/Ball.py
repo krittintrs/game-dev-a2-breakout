@@ -15,7 +15,7 @@ class Ball:
         self.skin = skin
         self.image = ball_image_list[self.skin]
 
-        self.StartBombBall()
+        self.StopBombBall()
 
     def Collides(self, target):
         if self.rect.x > target.rect.x + target.width or target.rect.x > self.rect.x + self.width:

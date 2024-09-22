@@ -147,11 +147,10 @@ class GameMain:
             #bg render
             self.RenderBackground()
 
-            # Render debug images and names
-            self.RenderDebugImages()
+            # self.RenderDebugImages()
 
             #render
-            # g_state_manager.render()
+            g_state_manager.render()
 
             #screen update
             pygame.display.update()
