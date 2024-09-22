@@ -57,6 +57,7 @@ gSounds = {
     "brick-hit1": pygame.mixer.Sound("sounds/brick-hit-1.wav"),
     "brick-hit2": pygame.mixer.Sound("sounds/brick-hit-2.wav"),
     'brick-hit-unbreakable': pygame.mixer.Sound("sounds/brick-hit-unbreakable.wav"),
+    'bomb': pygame.mixer.Sound("sounds/bomb.wav"),
 }
 
 brick_image_list = [
