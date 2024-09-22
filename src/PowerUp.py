@@ -1,5 +1,6 @@
 import pygame
 from src.constants import *
+from src.Dependency import *
 from enum import Enum, auto
 
 class PowerUpType(Enum):
@@ -17,27 +18,21 @@ class PowerUp:
         self.type = power_type
         self.active = False  # Not yet activated
         self.speed = 150  # falling speed
-        self.font = pygame.font.Font(None, 24)  # Font for debugging text
 
+        self.setImage()
+
+    def setImage(self):
+        if self.type == PowerUpType.BOMB_BALL:
+            self.image = powerups_image_list[0]
+        elif self.type == PowerUpType.EXTENDED_PADDLE:
+            self.image = powerups_image_list[1]
+        elif self.type == PowerUpType.LASER_PADDLE:
+            self.image = powerups_image_list[2]
+        
     def update(self, dt):
         """Move the power-up down."""
         self.y += self.speed * dt
 
     def render(self, screen):
         """Draw the power-up on the screen and display the name."""
-        if self.type == PowerUpType.LASER_PADDLE:
-            # Draw laser paddle power-up (example color)
-            pygame.draw.rect(screen, (255, 0, 0), (self.x, self.y, self.width, self.height))
-            power_up_name = "Laser Paddle"
-        elif self.type == PowerUpType.EXTENDED_PADDLE:
-            # Draw extended paddle power-up (example color)
-            pygame.draw.rect(screen, (0, 255, 0), (self.x, self.y, self.width, self.height))
-            power_up_name = "Extended Paddle"
-        elif self.type == PowerUpType.BOMB_BALL:
-            # Draw bomb ball power-up (example color)
-            pygame.draw.rect(screen, (0, 0, 255), (self.x, self.y, self.width, self.height))
-            power_up_name = "Bomb Ball"
-
-        # Render the power-up name below the power-up
-        label = self.font.render(power_up_name, True, (255, 255, 255))  # White color text
-        screen.blit(label, (self.x, self.y + self.height + 5))  # Adjust position below the power-up
+        screen.blit(self.image, (self.x, self.y ))

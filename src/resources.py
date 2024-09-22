@@ -58,6 +58,8 @@ gSounds = {
     "brick-hit2": pygame.mixer.Sound("sounds/brick-hit-2.wav"),
     'brick-hit-unbreakable': pygame.mixer.Sound("sounds/brick-hit-unbreakable.wav"),
     'bomb': pygame.mixer.Sound("sounds/bomb.wav"),
+    'powerup_bomb': pygame.mixer.Sound("sounds/powerup_bomb.wav"),
+    'powerup_paddle': pygame.mixer.Sound("sounds/powerup_paddle.wav"),
 }
 
 brick_image_list = [
@@ -82,4 +84,10 @@ brick_image_list = [
     sprite_collection["b_orange_2"].image,
     sprite_collection["b_orange_3"].image,
     sprite_collection["b_gray"].image,
+]
+
+powerups_image_list = [
+    sprite_collection["powerup_bomb"].image,
+    sprite_collection["powerup_paddle"].image,
+    sprite_collection["powerup_laser"].image
 ]

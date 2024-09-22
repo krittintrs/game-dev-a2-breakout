@@ -1,0 +1,29 @@
+{
+    "spriteSheetURL": "./graphics/powerups.png",
+    "size":[16,16],
+    "sprites":[
+        {
+            "name":"powerup_bomb",
+            "x":0,
+            "y":0,
+            "scalefactor":3,
+            "colorKey":-1
+        },
+        {
+            "name":"powerup_paddle",
+            "x":16,
+            "y":0,
+            "scalefactor":3,
+            "colorKey":-1
+        },
+        {
+            "name":"powerup_laser",
+            "x":32,
+            "y":0,
+            "scalefactor":3,
+            "colorKey":-1
+        }
+    ]
+}
+
+
