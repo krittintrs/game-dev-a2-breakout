@@ -20,6 +20,13 @@ paddle_image_list = [
     sprite_collection["p_purple_2"].image,
 ]
 
+large_paddle_image_list = [
+    sprite_collection["p_blue_large"].image,
+    sprite_collection["p_green_large"].image,
+    sprite_collection["p_red_large"].image,
+    sprite_collection["p_purple_large"].image,
+]
+
 ball_image_list = [
     sprite_collection["blue_ball"].image,
     sprite_collection["green_ball"].image,

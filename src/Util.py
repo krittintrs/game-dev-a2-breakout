@@ -10,6 +10,7 @@ class SpriteManager:
     def __init__(self):
         self.spriteCollection = self.loadSprites(
             [
+                "./sprite/LargePaddle.json",
                 "./sprite/MiddlePaddle.json",
                 "./sprite/SmallPaddle.json",
                 "./sprite/Brick.json",
