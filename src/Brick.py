@@ -44,6 +44,13 @@ class Brick:
         self.movable = False
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
 
+        # Blink effect variables
+        self.blink_timer = 0
+        self.blinking = False
+        self.blink_interval = 0.2  # Time in seconds between blinks
+        self.blink_duration = 1    # Total blink duration in seconds (1 sec blink)
+        self.blink_time_remaining = 0
+
     def Unbreaking(self):
         self.color = 5
         self.tier = 0
@@ -104,9 +111,35 @@ class Brick:
         if self.movable:
             tween.update(dt)
         
+        # Handle blinking effect timer
+        if self.blinking:
+            self.blink_timer += dt
+            self.blink_time_remaining -= dt
+            if self.blink_time_remaining <= 0:
+                self.blinking = False  # Stop blinking after 1 second
+
+            if self.blink_timer >= self.blink_interval:
+                self.blink_timer = 0  # Reset the blink interval timer
+
+    def start_blinking(self):
+        """Start the blinking effect."""
+        self.blinking = True
+        self.blink_timer = 0
+        self.blink_time_remaining = self.blink_duration
+
+    def stop_blinking(self):
+        """Stop the blinking effect."""
+        self.blinking = False
+        self.blink_timer = self.blink_interval
+        self.blink_time_remaining = 0
+        
     def render(self, screen):
         if self.alive:
-            screen.blit(
-                brick_image_list[(self.color)*4 + self.tier], 
-                (self.rect.x, self.rect.y)
-            )
+            if self.blinking and self.blink_timer < self.blink_interval / 2:
+                # During the first half of the blink interval, draw a white paddle
+                pygame.draw.rect(screen, (255, 255, 255), self.rect, border_radius=20)
+            else:
+                screen.blit(
+                    brick_image_list[(self.color)*4 + self.tier], 
+                    (self.rect.x, self.rect.y)
+                )

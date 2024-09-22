@@ -21,6 +21,7 @@ class PlayState(BaseState):
         self.power_ups = []
         self.power_up_timers = {}
         self.paddle.Reset()
+        self.explosions = []
 
         self.recover_points = 5000
 
@@ -60,7 +61,7 @@ class PlayState(BaseState):
         if self.ball.Collides(self.paddle):
             # raise ball above paddle
             ####can be fixed to make it natural####
-            self.ball.rect.y = self.paddle.rect.y - 24
+            self.ball.rect.y = self.paddle.rect.y - self.ball.rect.height
             self.ball.dy = -self.ball.dy
 
             # half left hit while moving left (side attack) the more side, the faster
@@ -71,21 +72,60 @@ class PlayState(BaseState):
                 self.ball.dx = 150 + (8 * abs(self.paddle.rect.x + self.paddle.width / 2 - self.ball.rect.x))
             gSounds['paddle-hit'].play()
 
-        for brick in self.bricks:
-            if brick.unbreakable and brick.movable:
-                brick.update(dt)
+        for i, brick in enumerate(self.bricks):
+            brick.update(dt)
             if brick.alive and self.ball.Collides(brick):
                 if not brick.unbreakable:
                     self.score = self.score + (brick.tier * 200 + (brick.color+1) * 25)
                     print(self.score)
                 
-                isDestroyed = brick.Hit()
+                if self.ball.isBomb:
+                    gSounds['bomb'].play()
+
+                    # Calculate score for the brick
+                    print(f'Brick color: {brick.color}, Brick tier: {brick.tier}')
+                    color_score = [25, 50, 75, 100, 125]
+                    current_tier_score = sum(color_score[:brick.color + 1])
+                    if brick.tier > 0:
+                        current_tier_inc = brick.tier * 200 * (brick.color + 1)
+                        current_tier_score += current_tier_inc
+                        tier_score = [375, 1375, 2375, 3375]
+                        prev_tier_score = sum(tier_score[:brick.tier])
+                    else:
+                        prev_tier_score = 0
+                    # print(f'Current tier score: {current_tier_score} = {sum(color_score[:brick.color + 1])} + {current_tier_inc}, Previous tier score: {prev_tier_score}')
+                    bomb_score = 250
+                    self.score += current_tier_score + prev_tier_score + bomb_score
+                    brick.alive = False
+
+                    # Destroy nearby bricks
+                    for other_brick in self.bricks:
+                        if other_brick.alive and other_brick != brick:
+                            distance_x_left = self.ball.rect.centerx - other_brick.rect.x
+                            distance_x_right = self.ball.rect.centerx - (other_brick.rect.x + other_brick.width)
+                            distance_y_top = self.ball.rect.centery - other_brick.rect.y   
+                            distance_y_bottom = self.ball.rect.centery - (other_brick.rect.y + other_brick.height)  
+                            distance_1 = (distance_x_left ** 2 + distance_y_top ** 2) ** 0.5
+                            distance_2 = (distance_x_right ** 2 + distance_y_top ** 2) ** 0.5
+                            distance_3 = (distance_x_left ** 2 + distance_y_bottom ** 2) ** 0.5
+                            distance_4 = (distance_x_right ** 2 + distance_y_bottom ** 2) ** 0.5
+                            if distance_1 < BOMB_RANGE or distance_2 < BOMB_RANGE or distance_3 < BOMB_RANGE or distance_4 < BOMB_RANGE:
+                                other_brick.Hit()
+                                other_brick.start_blinking()
+                                self.score += (other_brick.tier * 200 + (other_brick.color + 1) * 25)
+                    
+                    explosion = Explosion(self.ball.rect.centerx, self.ball.rect.centery)
+                    self.explosions.append(explosion)
+                    self.ball.StopBombBall()
+                    isDestroyed = True
+                else:
+                    isDestroyed = brick.Hit()
 
                 if isDestroyed:
                     # FIXME : change power-up spawn rate
                     if random.random() < 0.9:  # 20% chance to spawn power-up
                         power_up_type = random.choice([PowerUpType.LASER_PADDLE, PowerUpType.EXTENDED_PADDLE, PowerUpType.BOMB_BALL])
-                        power_up_type = PowerUpType.EXTENDED_PADDLE
+                        power_up_type = PowerUpType.BOMB_BALL
                         power_up = PowerUp(brick.x, brick.y, power_up_type)
                         self.power_ups.append(power_up)  # Add power-up to the active list
 
@@ -180,7 +220,11 @@ class PlayState(BaseState):
             if self.power_up_timers[power_up_type] <= 0:
                 self.deactivate_powerup(power_up_type)
                 del self.power_up_timers[power_up_type]
-    
+
+        for explosion in self.explosions:
+            if not explosion.update(dt):
+                self.explosions.remove(explosion)
+
     def Exit(self):
         pass
 
@@ -191,6 +235,9 @@ class PlayState(BaseState):
         # Render power-ups
         for power_up in self.power_ups:
             power_up.render(screen)
+
+        for explosion in self.explosions:
+            explosion.render(screen)
 
         self.paddle.render(screen)
         self.ball.render(screen)
@@ -240,15 +287,16 @@ class PlayState(BaseState):
         if PowerUpType.EXTENDED_PADDLE not in self.power_up_timers:
             self.paddle.IncreasePadSize()
             self.paddle.start_blinking()
-            self.power_up_timers[PowerUpType.EXTENDED_PADDLE] = 3  # Power-up lasts for 10 seconds
+            self.power_up_timers[PowerUpType.EXTENDED_PADDLE] = POWERUP_TIMER
             
-
     def activate_bomb_ball(self):
         """Activate bomb ball effect."""
-        # TODO : Change the ball into a bomb ball temporarily
+        self.ball.StartBombBall()
 
     def deactivate_powerup(self, power_up_type):
         """Deactivate power-up effects when the timer runs out."""
         if power_up_type == PowerUpType.EXTENDED_PADDLE:
             self.paddle.DecreasePadSize()
             self.paddle.start_blinking()
+        if power_up_type == PowerUpType.BOMB_BALL:
+            self.ball.StopBombBall()

@@ -126,7 +126,6 @@ class Paddle:
         self.blink_time_remaining = 0
 
     def render(self, screen):
-        """Render the paddle with optional blinking effect."""
         if self.blinking and self.blink_timer < self.blink_interval / 2:
             # During the first half of the blink interval, draw a white paddle
             pygame.draw.rect(screen, (255, 255, 255), self.rect, border_radius=20)
