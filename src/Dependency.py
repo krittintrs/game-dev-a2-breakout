@@ -3,7 +3,7 @@ from src.resources import *
 from src.Paddle import Paddle
 from src.Ball import Ball
 from src.LevelMaker import *
-
+from src.PowerUp import *
 
 from src.StateMachine import StateMachine
 from src.states.BaseState import BaseState

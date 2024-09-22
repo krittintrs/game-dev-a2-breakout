@@ -17,6 +17,7 @@ class PlayState(BaseState):
         self.high_scores = params['high_scores']
         self.ball = params['ball']
         self.level = params['level']
+        self.power_ups = []
 
         self.recover_points = 5000
 
@@ -67,13 +68,22 @@ class PlayState(BaseState):
                 self.ball.dx = 150 + (8 * abs(self.paddle.rect.x + self.paddle.width / 2 - self.ball.rect.x))
             gSounds['paddle-hit'].play()
 
-        for k, brick in enumerate(self.bricks):
+        for brick in self.bricks:
             if brick.unbreakable and brick.movable:
                 brick.update(dt)
             if brick.alive and self.ball.Collides(brick):
                 if not brick.unbreakable:
-                    self.score = self.score + (brick.tier * 200 + brick.color * 25)
-                brick.Hit()
+                    self.score = self.score + (brick.tier * 200 + (brick.color+1) * 25)
+                    print(self.score)
+                
+                isDestroyed = brick.Hit()
+
+                if isDestroyed:
+                    # FIXME : change power-up spawn rate
+                    if random.random() < 0.9:  # 20% chance to spawn power-up
+                        power_up_type = random.choice([PowerUpType.LASER_PADDLE, PowerUpType.EXTENDED_PADDLE, PowerUpType.BOMB_BALL])
+                        power_up = PowerUp(brick.x, brick.y, power_up_type)
+                        self.power_ups.append(power_up)  # Add power-up to the active list
 
                 if self.score > self.recover_points:
                     self.health = min(3, self.health + 1)
@@ -141,12 +151,29 @@ class PlayState(BaseState):
                     'recover_points': self.recover_points
                 })
 
+        # Update power-ups
+        for power_up in self.power_ups:
+            power_up.update(dt)
+
+            # Check if power-up is collected by the paddle
+            if self.check_powerup_collision(self.paddle, power_up):
+                print(f"Power-up {power_up} collected")
+                self.power_ups.remove(power_up)
+
+            # Remove power-up if it falls off the screen
+            elif power_up.y > HEIGHT:
+                self.power_ups.remove(power_up)
+
     def Exit(self):
         pass
 
     def render(self, screen):
         for brick in self.bricks:
             brick.render(screen)
+        
+        # Render power-ups
+        for power_up in self.power_ups:
+            power_up.render(screen)
 
         self.paddle.render(screen)
         self.ball.render(screen)
@@ -166,3 +193,35 @@ class PlayState(BaseState):
                 return False
 
         return True
+
+    def check_powerup_collision(self, paddle, power_up):
+        """Check if the paddle collects the power-up."""
+        if power_up.x + power_up.width < paddle.rect.x or power_up.x > paddle.rect.x + paddle.rect.width:
+            return False
+    
+        if power_up.y + power_up.height < paddle.rect.y or power_up.y > paddle.rect.y + paddle.rect.height:
+            return False
+    
+        self.activate_powerup(power_up)
+        return True
+
+    def activate_powerup(self, power_up):
+        """Activates the power-up's effect."""
+        if power_up.type == PowerUpType.LASER_PADDLE:
+            self.activate_laser_paddle()
+        elif power_up.type == PowerUpType.EXTENDED_PADDLE:
+            self.activate_extended_paddle()
+        elif power_up.type == PowerUpType.BOMB_BALL:
+            self.activate_bomb_ball()
+
+    def activate_laser_paddle(self):
+        """Activate laser paddle effect for a limited time."""
+        # TODO : Add code to enable laser shooting for a few seconds
+
+    def activate_extended_paddle(self):
+        """Extend paddle size for a limited time."""
+        # TODO : Temporarily increase paddle size
+
+    def activate_bomb_ball(self):
+        """Activate bomb ball effect."""
+        # TODO : Change the ball into a bomb ball temporarily

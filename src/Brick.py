@@ -96,6 +96,9 @@ class Brick:
 
             if not self.alive:
                 gSounds['brick-hit1'].play()
+                return True
+            
+        return False
 
     def update(self, dt):
         if self.movable:
