@@ -82,8 +82,8 @@ class PlayState(BaseState):
                 if self.ball.isBomb:
                     gSounds['bomb'].play()
 
+                    # Calculate score for the brick
                     if not brick.unbreakable:
-                        # Calculate score for the brick
                         # print(f'Brick color: {brick.color}, Brick tier: {brick.tier}')
                         color_score = [25, 50, 75, 100, 125]
                         current_tier_score = sum(color_score[:brick.color + 1])

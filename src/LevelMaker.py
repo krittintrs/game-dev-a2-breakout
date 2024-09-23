@@ -44,7 +44,7 @@ class LevelMaker:
 
     @classmethod
     def calculate_brick_strength(cls, tier, color):
-        return tier * 5 + color  # Tier has more impact than color
+        return tier * 5 + color  
 
     @classmethod
     def derive_tier_and_color(cls, strength):
@@ -151,7 +151,7 @@ class LevelMaker:
                     else:
                         pattern = Pattern.PYRAMID
                 else:
-                    # 1 - increase COL, sane ROW
+                    # 2 - increase COL, sane ROW
                     print('??? SAME STR - COL UP & SAME ROW ???')
                     num_rows = max(prev_rows, MIN_ROW)
                     num_cols = min(max(prev_cols + 2, MIN_COL), MAX_COL) 
@@ -260,18 +260,18 @@ class LevelMaker:
         if pattern == Pattern.PYRAMID:
             choice = random.randint(1, 4)
             cols_list = []
-            if choice == 1:     # single pyramid down
+            if choice == 1:     # single inverted pyramid 
                 cols_list = [max(num_cols - i, 1-(num_cols%2)) for i in range(num_rows)]
-            elif choice == 2:   # single pyramid up
+            elif choice == 2:   # single normal pyramid 
                 cols_list = [max(num_cols - (num_rows-i-1), 1-(num_cols%2)) for i in range(num_rows)]
-            elif choice == 3:   # double pyramid down-up (hourglass)
+            elif choice == 3:   # double pyramid inv-norm (hourglass)
                 middle = num_rows//2 + num_rows%2
                 for i in range(num_rows):
                     if i < middle:
                         cols_list.append(max(num_cols - i*2, 2-(num_rows%2)))
                     else:
                         cols_list.append(max(num_cols - ((num_rows-middle)-(i-middle)-1)*2, 2-(num_rows%2)))
-            elif choice == 4:   # double pyramid up-down
+            elif choice == 4:   # double pyramid norm-inv
                 middle = num_rows//2 + num_rows%2
                 for i in range(num_rows):
                     if i < middle:
@@ -308,10 +308,6 @@ class LevelMaker:
             col = cols_list[y]
 
             bricks.append([])
-            # if multiple_pattern:
-            #     print(f'row: {y}')
-            #     print(f'\twith ALTER {alt_pattern} ({alt_flag})')
-            #     print(f'\twith SKIP  {skip_pattern} ({skip_flag})')
 
             for x in range(col):
                 if skip_pattern and skip_flag:
@@ -350,7 +346,7 @@ class LevelMaker:
         print(f'pattern: {pattern}')
         print(f'INITIAL: {prev_diff} + ({difficulty - prev_diff}) >>> {difficulty}')
 
-        # Recursive Update
+        # Recursive Upgrade
         row = 0
         brick_not_exceed = True
         while difficulty < prev_diff and brick_not_exceed:
