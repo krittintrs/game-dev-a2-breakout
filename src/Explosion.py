@@ -9,7 +9,7 @@ class Explosion:
         self.max_radius = BOMB_RANGE  # Maximum explosion radius
         self.expanding = True
         self.timer = 0
-        self.duration = 4  # Duration of the fading effect in seconds
+        self.duration = 2  # Duration of the fading effect in seconds
         self.start_time = pygame.time.get_ticks()  # Track when the explosion started
 
     def update(self, dt):

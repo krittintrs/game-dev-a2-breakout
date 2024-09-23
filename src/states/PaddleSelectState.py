@@ -54,7 +54,7 @@ class PaddleSelectState(BaseState):
                         'level': 1,
                         'paddle': Paddle(self.curr_paddle),
                         'bricks': LevelMaker.CreateMap(1),
-                        'health': 3,
+                        'health': 5,
                         'score': 0,
                         'high_scores': self.high_scores,
                         'recover_points': 5000

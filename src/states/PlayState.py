@@ -41,8 +41,6 @@ class PlayState(BaseState):
                     gSounds['pause'].play()
                     #music_channel.play(sounds_list['pause'])
                 if event.key == pygame.K_k:
-                    gSounds['victory'].play()
-
                     g_state_manager.Change('victory', {
                         'level':self.level,
                         'paddle':self.paddle,
