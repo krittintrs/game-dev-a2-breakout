@@ -299,7 +299,7 @@ class PlayState(BaseState):
 
     def CheckVictory(self):
         for brick in self.bricks:
-            if brick.alive or brick.unbreakable:
+            if brick.alive or (not brick.alive and brick.unbreakable):
                 return False
 
         return True
